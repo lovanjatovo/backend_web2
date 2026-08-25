@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 
 import { corsConfig } from "./configuration/cors";
+import { authMiddleware } from "./security/authMiddleware";
+import { roleMiddleware } from "./security/roleMiddleware";
 
 import { AuthController } from "./controller/AuthController"; 
 import { StudentController } from "./controller/StudentController"; 
@@ -28,6 +30,12 @@ const questionController = new QuestionController();
 const resultController = new ResultController(); 
  
 app.post("/api/auth/login", authController.login); 
+
+// STUDENTS - ADMIN 
+app.get("/api/students", authMiddleware, roleMiddleware("ADMIN"), studentController.getAll); 
+app.post("/api/students", authMiddleware, roleMiddleware("ADMIN"), studentController.create); 
+app.put("/api/students/:id", authMiddleware, roleMiddleware("ADMIN"), studentController.update); 
+app.delete("/api/students/:id", authMiddleware, roleMiddleware("ADMIN"), studentController.deactivate);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
