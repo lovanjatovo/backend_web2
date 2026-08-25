@@ -59,6 +59,12 @@ app.delete("/api/questions/:id", authMiddleware, roleMiddleware("ADMIN"), questi
 // RESULTS - ADMIN 
 app.get("/api/exams/:id/results", authMiddleware, roleMiddleware("ADMIN"), resultController.getExamResults);
 
+// STUDENT 
+app.get("/api/my/exams", authMiddleware, roleMiddleware("STUDENT"), examController.getAvailable); 
+app.get("/api/my/exams/:id", authMiddleware, roleMiddleware("STUDENT"), questionController.getForStudent); 
+app.post("/api/my/exams/:id/submit", authMiddleware, roleMiddleware("STUDENT"), resultController.submit); 
+app.get("/api/my/results", authMiddleware, roleMiddleware("STUDENT"), resultController.getMyResults);
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
