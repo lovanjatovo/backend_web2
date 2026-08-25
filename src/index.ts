@@ -56,6 +56,9 @@ app.post("/api/exams/:id/questions", authMiddleware, roleMiddleware("ADMIN"), qu
 app.put("/api/questions/:id", authMiddleware, roleMiddleware("ADMIN"), questionController.update); 
 app.delete("/api/questions/:id", authMiddleware, roleMiddleware("ADMIN"), questionController.delete); 
 
+// RESULTS - ADMIN 
+app.get("/api/exams/:id/results", authMiddleware, roleMiddleware("ADMIN"), resultController.getExamResults);
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
