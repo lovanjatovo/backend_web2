@@ -50,6 +50,12 @@ app.get("/api/exams/:id", authMiddleware, roleMiddleware("ADMIN"), examControlle
 app.put("/api/exams/:id", authMiddleware, roleMiddleware("ADMIN"), examController.update); 
 app.delete("/api/exams/:id", authMiddleware, roleMiddleware("ADMIN"), examController.delete);
 
+// QUESTIONS - ADMIN 
+app.get("/api/exams/:id/questions", authMiddleware, roleMiddleware("ADMIN"), questionController.getForAdmin); 
+app.post("/api/exams/:id/questions", authMiddleware, roleMiddleware("ADMIN"), questionController.create); 
+app.put("/api/questions/:id", authMiddleware, roleMiddleware("ADMIN"), questionController.update); 
+app.delete("/api/questions/:id", authMiddleware, roleMiddleware("ADMIN"), questionController.delete); 
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
