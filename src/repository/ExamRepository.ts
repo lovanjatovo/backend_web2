@@ -3,10 +3,11 @@ import { pool } from "../configuration/db";
 
 export class ExamRepository {
     async findAll() {
-        const result = await pool.query(`
-            SELECT e.id, e.course_id AS "courseId", e.name,
+        const result = await pool.query(
+            `SELECT e.id, e.course_id AS "courseId", e.name,
                    e.start_date AS "startDate", e.end_date AS "endDate",
-                   c.name AS "courseName"
+                   c.name AS "courseName",
+                   EXISTS (SELECT 1 FROM attempts a WHERE a.exam_id = e.id) AS "hasAttempt"
             FROM exams e
             JOIN courses c ON c.id = e.course_id
             ORDER BY e.start_date
@@ -15,8 +16,8 @@ export class ExamRepository {
     }
 
     async findById(id: number) {
-        const result = await pool.query(`
-            SELECT e.id, e.course_id AS "courseId", e.name,
+        const result = await pool.query(
+            `SELECT e.id, e.course_id AS "courseId", e.name,
                    e.start_date AS "startDate", e.end_date AS "endDate",
                    c.name AS "courseName"
             FROM exams e
@@ -27,8 +28,8 @@ export class ExamRepository {
     }
 
     async create(courseId: number, name: string, startDate: string, endDate: string) {
-        const result = await pool.query(`
-            INSERT INTO exams (course_id, name, start_date, end_date)
+        const result = await pool.query(
+            `INSERT INTO exams (course_id, name, start_date, end_date)
             VALUES ($1, $2, $3, $4)
             RETURNING id, course_id AS "courseId", name,
                       start_date AS "startDate", end_date AS "endDate"
@@ -37,8 +38,8 @@ export class ExamRepository {
     }
 
     async update(id: number, courseId: number, name: string, startDate: string, endDate: string) {
-        const result = await pool.query(`
-            UPDATE exams
+        const result = await pool.query(
+            `UPDATE exams
             SET course_id = $1, name = $2, start_date = $3, end_date = $4
             WHERE id = $5
             RETURNING id, course_id AS "courseId", name,
@@ -47,18 +48,24 @@ export class ExamRepository {
         return result.rows[0] ?? null;
     }
 
-    async findAvailable() {
-        const result = await pool.query(`
-            SELECT e.id, e.name,
+    async findAvailableForStudent(studentId: number) {
+        const result = await pool.query(
+            `SELECT e.id, e.name,
                 e.course_id AS "courseId",
                 c.name AS "courseName",
                 e.start_date AS "startDate",
                 e.end_date AS "endDate"
             FROM exams e
             JOIN courses c ON c.id = e.course_id
-            WHERE CURRENT_TIMESTAMP BETWEEN e.start_date AND e.end_date
+            WHERE e.end_date >= CURRENT_TIMESTAMP
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM attempts a
+                  WHERE a.exam_id = e.id
+                    AND a.student_id = $1
+              )
             ORDER BY e.start_date
-        `);
+        `, [studentId]);
         return result.rows;
     }
 

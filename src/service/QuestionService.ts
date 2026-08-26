@@ -7,7 +7,7 @@ export class QuestionService {
     private attemptRepository = new AttemptRepository();
     private examRepository = new ExamRepository();
 
-    async getQuestionsForStudent(examId: number) {
+    async getQuestionsForStudent(examId: number, studentId: number) {
         const exam = await this.examRepository.findById(examId);
         if (!exam) {throw new Error("EXAM_NOT_FOUND");}
 
@@ -16,16 +16,36 @@ export class QuestionService {
             throw new Error("EXAM_NOT_AVAILABLE");
         }
 
+        const hasAttempt = await this.attemptRepository.findByStudentAndExam(
+            studentId,
+            examId
+        );
+        if (hasAttempt) {
+            throw new Error("ALREADY_ATTEMPTED");
+        }
+
         const questions = await this.repository.findByExam(examId);
-        return questions.map(question => ({
-            id: question.id,
-            statement: question.statement,
-            points: question.points,
-            choices: question.choices.map((choice: any) => ({
-                id: choice.id,
-                content: choice.content
+
+        // La route étudiant /api/my/exams/:id doit renvoyer
+        // l'examen avec ses questions, car le front attend exam.questions.
+        // Les bonnes réponses restent volontairement masquées côté étudiant.
+        return {
+            id: exam.id,
+            courseId: exam.courseId,
+            courseName: exam.courseName,
+            name: exam.name,
+            startDate: exam.startDate,
+            endDate: exam.endDate,
+            questions: questions.map(question => ({
+                id: question.id,
+                statement: question.statement,
+                points: question.points,
+                choices: question.choices.map((choice: any) => ({
+                    id: choice.id,
+                    content: choice.content
+                }))
             }))
-        }));
+        };
     }
 
     async getQuestionsForAdmin(examId: number) {

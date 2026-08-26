@@ -3,6 +3,7 @@ import { ResultService } from "../service/ResultService";
 
 export class ResultController {
     private service = new ResultService();
+
     submit = async (req: Request, res: Response) => {
         try {
             const studentId = req.user!.userId;

@@ -3,7 +3,6 @@ import { ExamService } from "../service/ExamService";
 
 export class ExamController {
     private service = new ExamService();
-
     getAll = async (req: Request, res: Response) => {
         try {
             const exams = await this.service.getAll();
@@ -25,7 +24,7 @@ export class ExamController {
 
     getAvailable = async (req: Request, res: Response) => {
         try {
-            const exams = await this.service.getAvailable();
+            const exams = await this.service.getAvailable(req.user!.userId);
             return res.status(200).json(exams);
         } catch {
             return res.status(500).json({ message: "Internal server error" });
@@ -54,7 +53,15 @@ export class ExamController {
             const exam = await this.service.update(Number(req.params.id), courseId, name, startDate, endDate);
             if (!exam) return res.status(404).json({ message: "Exam not found" });
             return res.status(200).json(exam);
-        } catch {
+        } catch (error) {
+            if (error instanceof Error && error.message === "INVALID_DATES") {
+                return res.status(400).json({ message: "End date must be after start date" });
+            }
+
+            if (error instanceof Error && error.message === "EXAM_LOCKED") {
+                return res.status(409).json({ message: "This exam cannot be modified because it already has an attempt" });
+            }
+
             return res.status(500).json({ message: "Internal server error" });
         }
     };
@@ -65,8 +72,12 @@ export class ExamController {
             if (!count) return res.status(404).json({ message: "Exam not found" });
             return res.status(200).json({ message: "Exam deleted successfully" });
             
-        } catch {
-            return res.status(409).json({ message: "Exam cannot be deleted" });
+        } catch (error) {
+            if (error instanceof Error && error.message === "EXAM_LOCKED") {
+                return res.status(409).json({ message: "This exam cannot be deleted because it already has an attempt" });
+            }
+
+            return res.status(500).json({ message: "Internal server error" });
         }
     };
 }

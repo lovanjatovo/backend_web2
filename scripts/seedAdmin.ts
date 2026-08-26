@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { pool } from "../src/Configuration/db";
+import { pool } from "../src/configuration/db";
 
 async function seedAdmin() {
     try {
@@ -7,8 +7,7 @@ async function seedAdmin() {
         const password = "Admin123";
 
         const existingAdmin = await pool.query(
-            `SELECT id FROM users
-             WHERE email = $1`,
+            `SELECT id FROM users WHERE email = $1`,
             [email]
         );
 
@@ -21,17 +20,15 @@ async function seedAdmin() {
 
         await pool.query(
             `INSERT INTO users
-                (email, password_hash, role, is_active)
+                (first_name, last_name, email, password_hash, role, is_active)
              VALUES
-                ($1, $2, 'ADMIN', true)`,
-            [email, passwordHash]
+                ($1, $2, $3, $4, 'ADMIN', true)`,
+            ["Admin", "Exam", email, passwordHash]
         );
 
         console.log("Admin created successfully.");
-
     } catch (error) {
         console.error("Error occurred while creating the admin :", error);
-
     } finally {
         await pool.end();
     }

@@ -2,8 +2,8 @@ import { pool } from "../configuration/db";
 
 export class AttemptRepository {
     async findByStudentAndExam(studentId: number, examId: number) {
-        const result = await pool.query(`
-            SELECT id, student_id AS "studentId", exam_id AS "examId",
+        const result = await pool.query(
+            `SELECT id, student_id AS "studentId", exam_id AS "examId",
                    score, submitted_at AS "submittedAt"
             FROM attempts
             WHERE student_id = $1 AND exam_id = $2 `, [studentId, examId]);
@@ -12,8 +12,8 @@ export class AttemptRepository {
     }
 
     async create(studentId: number, examId: number, score: number) {
-        const result = await pool.query(`
-            INSERT INTO attempts (student_id, exam_id, score)
+        const result = await pool.query(
+            `INSERT INTO attempts (student_id, exam_id, score)
             VALUES ($1, $2, $3)
             RETURNING id, student_id AS "studentId",
                       exam_id AS "examId", score,
@@ -23,14 +23,14 @@ export class AttemptRepository {
     }
 
     async createAnswer(attemptId: number, questionId: number, choiceId: number | null) {
-        await pool.query(`
-            INSERT INTO answers (attempt_id, question_id, choice_id)
+        await pool.query(
+            `INSERT INTO answers (attempt_id, question_id, choice_id)
             VALUES ($1, $2, $3) `, [attemptId, questionId, choiceId]);
     }
 
     async hasAttemptForExam(examId: number) {
-        const result = await pool.query(`
-            SELECT 1
+        const result = await pool.query(
+            `SELECT 1
             FROM attempts
             WHERE exam_id = $1
             LIMIT 1 `, [examId]);
@@ -39,11 +39,12 @@ export class AttemptRepository {
     }
 
     async getExamResults(examId: number) {
-        const result = await pool.query(`
-            SELECT
+        const result = await pool.query(
+            `SELECT
                 a.id,
                 a.student_id AS "studentId",
-                u.email AS "studentEmail",
+                CONCAT_WS(' ', u.first_name, u.last_name) AS "studentName",
+                u.email AS "email",
                 a.exam_id AS "examId",
                 e.name AS "examName",
                 a.score,
@@ -72,8 +73,8 @@ export class AttemptRepository {
     }
 
     async getAverage(studentId: number) {
-        const result = await pool.query(`
-            SELECT COALESCE(AVG(score), 0) AS average
+        const result = await pool.query(
+            `SELECT COALESCE(AVG(score), 0) AS average
             FROM attempts
             WHERE student_id = $1 `, [studentId]);
 

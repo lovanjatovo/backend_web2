@@ -2,14 +2,14 @@ import { pool } from "../configuration/db";
 
 export class QuestionRepository {
     async findByExam(examId: number) {
-        const result = await pool.query(
-            `SELECT q.id AS "questionId", q.statement, q.points,
+        const result = await pool.query(`
+            SELECT q.id AS "questionId", q.statement, q.points,
                    c.id AS "choiceId", c.content, c.is_correct AS "isCorrect"
             FROM questions q
             JOIN choices c ON c.question_id = q.id
             WHERE q.exam_id = $1
-            ORDER BY q.id, c.id`
-        , [examId]);
+            ORDER BY q.id, c.id
+        `, [examId]);
 
         const questions: any[] = [];
 
@@ -55,22 +55,22 @@ export class QuestionRepository {
         try {
             await client.query("BEGIN");
 
-            const questionResult = await client.query(
-                `INSERT INTO questions (exam_id, statement, points)
+            const questionResult = await client.query(`
+                INSERT INTO questions (exam_id, statement, points)
                 VALUES ($1, $2, $3)
-                RETURNING id, exam_id AS "examId", statement, points`
-            , [examId, statement, points]);
+                RETURNING id, exam_id AS "examId", statement, points
+            `, [examId, statement, points]);
 
             const question = questionResult.rows[0];
 
             const createdChoices = [];
 
             for (const choice of choices) {
-                const result = await client.query(
-                    `INSERT INTO choices (question_id, content, is_correct)
+                const result = await client.query(`
+                    INSERT INTO choices (question_id, content, is_correct)
                     VALUES ($1, $2, $3)
-                    RETURNING id, content`
-                , [question.id, choice.content, choice.isCorrect]);
+                    RETURNING id, content
+                `, [question.id, choice.content, choice.isCorrect]);
 
                 createdChoices.push(result.rows[0]);
             }
@@ -97,12 +97,12 @@ export class QuestionRepository {
         try {
             await client.query("BEGIN");
 
-            const questionResult = await client.query(
-                `UPDATE questions
+            const questionResult = await client.query(`
+                UPDATE questions
                 SET statement = $1, points = $2
                 WHERE id = $3
-                RETURNING id, exam_id AS "examId", statement, points`
-            , [statement, points, id]);
+                RETURNING id, exam_id AS "examId", statement, points
+            `, [statement, points, id]);
 
             if (questionResult.rowCount === 0) {
                 await client.query("ROLLBACK");
@@ -117,18 +117,21 @@ export class QuestionRepository {
             const createdChoices = [];
 
             for (const choice of choices) {
-                const result = await client.query(
-                    `INSERT INTO choices (question_id, content, is_correct)
+                const result = await client.query(`
+                    INSERT INTO choices (question_id, content, is_correct)
                     VALUES ($1, $2, $3)
-                    RETURNING id, content`
-                , [id, choice.content, choice.isCorrect]);
+                    RETURNING id, content
+                `, [id, choice.content, choice.isCorrect]);
 
                 createdChoices.push(result.rows[0]);
             }
 
             await client.query("COMMIT");
 
-            return {...questionResult.rows[0], choices: createdChoices};
+            return {
+                ...questionResult.rows[0],
+                choices: createdChoices
+            };
         } catch (error) {
             await client.query("ROLLBACK");
             throw error;

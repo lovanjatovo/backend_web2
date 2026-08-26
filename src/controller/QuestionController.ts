@@ -15,8 +15,8 @@ export class QuestionController {
 
     getForStudent = async (req: Request, res: Response) => {
         try {
-            const questions = await this.service.getQuestionsForStudent( Number(req.params.id));
-            return res.status(200).json(questions);
+            const exam = await this.service.getQuestionsForStudent(Number(req.params.id), req.user!.userId);
+            return res.status(200).json(exam);
         } catch (error) {
             if (error instanceof Error && error.message === "EXAM_NOT_FOUND") {
                 return res.status(404).json({ message: "Exam not found"});
@@ -24,6 +24,10 @@ export class QuestionController {
 
             if (error instanceof Error && error.message === "EXAM_NOT_AVAILABLE" ) {
                 return res.status(403).json({message: "Exam is not available"});
+            }
+
+            if (error instanceof Error && error.message === "ALREADY_ATTEMPTED") {
+                return res.status(409).json({ message: "You have already attempted this exam" });
             }
 
             return res.status(500).json({ message: "Internal server error" });
@@ -68,7 +72,7 @@ export class QuestionController {
             const id = Number(req.params.id);
             const { statement, points, choices } = req.body;
 
-            if (!statement || !Array.isArray(choices)) {
+            if (!statement || !Array.isArray(choices) || choices.length === 0) {
                 return res.status(400).json({
                     message: "Statement and choices are required"
                 });
