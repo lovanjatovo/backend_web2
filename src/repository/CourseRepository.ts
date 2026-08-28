@@ -1,6 +1,15 @@
 import { pool } from "../configuration/db";
 
 export class CourseRepository {
+    async findById(id: number) {
+        const result = await pool.query(
+            `SELECT id, code, name, description
+             FROM courses
+             WHERE id = $1`,
+            [id]
+        );
+        return result.rows[0] ?? null;
+    }
 
     async findAll() {
         const result = await pool.query(
@@ -8,18 +17,16 @@ export class CourseRepository {
             FROM courses
             ORDER BY id`
         );
-
         return result.rows;
     }
 
-    async create(code: string, name: string, description: string) {
+    async create(code: string, name: string, description: string | null ) {
         const result = await pool.query(
             `INSERT INTO courses (code, name, description)
             VALUES ($1, $2, $3)
             RETURNING id, code, name, description`,
             [code, name, description]
         );
-
         return result.rows[0];
     }
 
@@ -27,7 +34,7 @@ export class CourseRepository {
         id: number,
         code: string,
         name: string,
-        description: string
+        description: string | null
     ) {
         const result = await pool.query(
             `UPDATE courses
@@ -38,7 +45,6 @@ export class CourseRepository {
             RETURNING id, code, name, description`,
             [code, name, description, id]
         );
-
         return result.rows[0] ?? null;
     }
 
@@ -48,7 +54,6 @@ export class CourseRepository {
             WHERE id = $1`,
             [id]
         );
-
         return result.rowCount;
     }
 }

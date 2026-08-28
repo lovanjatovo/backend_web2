@@ -1,11 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 export const roleMiddleware = (role: "ADMIN" | "STUDENT") => {
-    return (
-        req: Request, 
-        res: Response, 
-        next: NextFunction
-    ) => {
+    return (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) {
             return res.status(401).json({message: "Authentication required"});
         }

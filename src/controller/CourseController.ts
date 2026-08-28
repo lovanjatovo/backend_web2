@@ -17,13 +17,13 @@ export class CourseController {
         try {
             const { code, name, description } = req.body;
 
-            if (!code || !name || !description) {
+            if (!code || !name) {
                 return res.status(400).json({
-                    message: "Code, name and description are required"
+                    message: "Code and name are required"
                 });
             }
 
-            const course = await this.service.create(code, name, description);
+            const course = await this.service.create(code, name, description ?? null);
             return res.status(201).json(course);
         } catch (error) {
             if (error instanceof Error && (error as any).code === "23505") {
@@ -39,13 +39,13 @@ export class CourseController {
             const id = Number(req.params.id);
             const { code, name, description } = req.body;
 
-            if (!code || !name || !description) {
+            if (!code || !name) {
                 return res.status(400).json({
-                    message: "Code, name and description are required"
+                    message: "Code and name are required"
                 });
             }
 
-            const course = await this.service.update(id, code, name, description);
+            const course = await this.service.update(id, code, name, description ?? null);
 
             if (!course) {
                 return res.status(404).json({ message: "Course not found" });

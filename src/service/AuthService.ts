@@ -8,13 +8,10 @@ export class AuthService {
 
     async login(email: string, password: string) {
         const user = await this.userRepository.findByEmail(email);
-
         if (!user) {throw new Error("INVALID_CREDENTIALS");}
-
         if (!user.isActive) {throw new Error("ACCOUNT_DISABLED"); }
 
         const valid = await comparePassword(password, user.passwordHash );
-
         if (!valid) {throw new Error("INVALID_CREDENTIALS"); }
 
         const token = generateToken(user.id, user.role);

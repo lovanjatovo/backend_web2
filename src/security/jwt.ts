@@ -6,13 +6,10 @@ function getJwtSecret(): string {
     return secret;
 }
 
-export function generateToken(
-    userId: number,
-    role: "ADMIN" | "STUDENT"
-) {
+export function generateToken(userId: number, role: "ADMIN" | "STUDENT") {
     return jwt.sign(
         { userId, role },
         getJwtSecret(),
-        { expiresIn: "1h" }
+        { expiresIn: "24h" }
     );
 }

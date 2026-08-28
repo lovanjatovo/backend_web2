@@ -42,6 +42,18 @@ export class ResultController {
                 return res.status(400).json({ message: "Invalid choice selected" });
             }
 
+            if (error.message === "INVALID_QUESTION") {
+                return res.status(400).json({ message: "Question does not belong to this exam" });
+            }
+
+            if (error.message === "DUPLICATE_QUESTION") {
+                return res.status(400).json({ message: "A question cannot be answered more than once" });
+            }
+
+            if (error.message === "INVALID_ANSWER") {
+                return res.status(400).json({ message: "Invalid answer" });
+            }
+
             return res.status(500).json({ message: "Internal server error" });
         }
     };

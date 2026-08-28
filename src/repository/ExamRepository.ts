@@ -57,7 +57,8 @@ export class ExamRepository {
                 e.end_date AS "endDate"
             FROM exams e
             JOIN courses c ON c.id = e.course_id
-            WHERE e.end_date >= CURRENT_TIMESTAMP
+            WHERE e.start_date <= CURRENT_TIMESTAMP
+              AND e.end_date >= CURRENT_TIMESTAMP
               AND NOT EXISTS (
                   SELECT 1
                   FROM attempts a

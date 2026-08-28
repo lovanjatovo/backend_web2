@@ -2,6 +2,7 @@ import { pool } from "../configuration/db";
 import { User, Role } from "../model/User";
 
 export class UserRepository {
+
     async findByEmail(email: string): Promise<User | null> {
         const result = await pool.query(
             `SELECT
@@ -87,15 +88,17 @@ export class UserRepository {
         firstName: string,
         lastName: string,
         email: string,
-        isActive?: boolean
+        isActive?: boolean,
+        passwordHash?: string
     ): Promise<User | null> {
         const result = await pool.query(
             `UPDATE users
             SET first_name = $1,
                 last_name = $2,
                 email = $3,
-                is_active = COALESCE($4, is_active)
-            WHERE id = $5
+                is_active = COALESCE($4, is_active),
+                password_hash = COALESCE($5, password_hash)
+            WHERE id = $6
               AND role = 'STUDENT'
             RETURNING
                 id,
@@ -105,7 +108,7 @@ export class UserRepository {
                 password_hash AS "passwordHash",
                 role,
                 is_active AS "isActive"`,
-            [firstName, lastName, email, isActive ?? null, id]
+            [firstName, lastName, email, isActive ?? null, passwordHash ?? null, id]
         );
 
         return result.rows[0] ?? null;

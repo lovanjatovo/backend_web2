@@ -21,7 +21,7 @@ export class AuthController {
                 error instanceof Error &&
                 error.message === "ACCOUNT_DISABLED"
             ) {
-                return res.status(403).json({message: "Account disabled" });
+                return res.status(401).json({ message: "Account disabled" });
             }
 
             return res.status(401).json({message: "Invalid email or password"

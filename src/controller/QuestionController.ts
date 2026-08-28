@@ -3,12 +3,14 @@ import { QuestionService } from "../service/QuestionService";
 
 export class QuestionController {
     private service = new QuestionService();
-
     getForAdmin = async (req: Request, res: Response) => {
         try {
             const questions = await this.service.getQuestionsForAdmin(Number(req.params.id));
             return res.status(200).json(questions);
-        } catch {
+        } catch (error) {
+            if (error instanceof Error && error.message === "EXAM_NOT_FOUND") {
+                return res.status(404).json({ message: "Exam not found" });
+            }
             return res.status(500).json({ message: "Internal server error" });
         }
     };
@@ -38,7 +40,7 @@ export class QuestionController {
         try {
             const { statement, points, choices } = req.body;
 
-            if (!statement || !choices) {
+            if (!statement || !Array.isArray(choices)) {
                 return res.status(400).json({ message: "Statement and choices are required" });
             }
 
@@ -61,6 +63,10 @@ export class QuestionController {
 
             if (error instanceof Error && error.message === "EXAM_LOCKED") {
                 return res.status(409).json({ message: "This exam is locked because it already has an attempt" });
+            }
+
+            if (error instanceof Error && error.message === "EXAM_NOT_FOUND") {
+                return res.status(404).json({ message: "Exam not found" });
             }
 
             return res.status(500).json({ message: "Internal server error" });

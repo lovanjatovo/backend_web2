@@ -35,19 +35,23 @@ export class StudentService {
         firstName: string,
         lastName: string,
         email: string,
-        isActive?: boolean
+        isActive?: boolean,
+        password?: string
     ) {
         const student = await this.userRepository.findById(id);
         if (!student || student.role !== "STUDENT") {
             throw new Error("NOT_FOUND");
         }
 
+        const passwordHash = password ? await hashPassword(password) : undefined;
+
         return this.userRepository.updateStudent(
             id,
             firstName,
             lastName,
             email,
-            isActive
+            isActive,
+            passwordHash
         );
     }
 

@@ -49,6 +49,11 @@ export class QuestionService {
     }
 
     async getQuestionsForAdmin(examId: number) {
+        const exam = await this.examRepository.findById(examId);
+        if (!exam) {
+            throw new Error("EXAM_NOT_FOUND");
+        }
+
         return this.repository.findByExam(examId);
     }
 
@@ -58,6 +63,11 @@ export class QuestionService {
         points: number,
         choices: any[]
     ) {
+        const exam = await this.examRepository.findById(examId);
+        if (!exam) {
+            throw new Error("EXAM_NOT_FOUND");
+        }
+
         const hasAttempt = await this.attemptRepository.hasAttemptForExam(examId);
 
         if (hasAttempt) { throw new Error("EXAM_LOCKED");}

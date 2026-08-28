@@ -62,7 +62,12 @@ export class StudentController {
     update = async (req: Request, res: Response) => {
         try {
             const id = Number(req.params.id);
-            const { firstName, lastName, email, isActive } = req.body;
+            const { firstName, lastName, email, password } = req.body;
+            const isActive = typeof req.body.isActive === "boolean"
+                ? req.body.isActive
+                : typeof req.body.is_active === "boolean"
+                    ? req.body.is_active
+                    : undefined;
 
             if (!firstName || !lastName || !email) {
                 return res.status(400).json({
@@ -75,7 +80,8 @@ export class StudentController {
                 firstName,
                 lastName,
                 email,
-                typeof isActive === "boolean" ? isActive : undefined
+                typeof isActive === "boolean" ? isActive : undefined,
+                password || undefined
             );
 
             return res.status(200).json({
@@ -89,6 +95,10 @@ export class StudentController {
         } catch (error) {
             if (error instanceof Error && error.message === "NOT_FOUND") {
                 return res.status(404).json({ message: "Student not found" });
+            }
+
+            if (error instanceof Error && (error as any).code === "23505") {
+                return res.status(409).json({ message: "This email already exists" });
             }
 
             return res.status(500).json({ message: "Server error" });

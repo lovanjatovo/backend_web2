@@ -9,7 +9,7 @@ export class ResultService {
 
     async submitExam(studentId: number, examId: number, answers: any[]) {
         const exam = await this.examRepository.findById(examId);
-        if (!exam) {throw new Error("EXAM_NOT_FOUND");}
+        if (!exam) { throw new Error("EXAM_NOT_FOUND"); }
 
         const now = new Date();
         if (now < new Date(exam.startDate) || now > new Date(exam.endDate)) {
@@ -22,29 +22,54 @@ export class ResultService {
         }
 
         const questions = await this.questionRepository.findByExam(examId);
-        let score = 0;
-        const correction = questions.map(question => {
-            const answer = answers.find( a => a.questionId === question.id);
+        const questionById = new Map(questions.map((question) => [question.id, question]));
+        const seenQuestionIds = new Set<number>();
+
+        const normalizedAnswers = answers.map((answer) => ({
+            questionId: Number(answer.question_id ?? answer.questionId),
+            choiceId: Number(answer.choice_id ?? answer.choiceId)
+        }));
+
+        for (const answer of normalizedAnswers) {
+            if (!Number.isInteger(answer.questionId) || !Number.isInteger(answer.choiceId)) {
+                throw new Error("INVALID_ANSWER");
+            }
+
+            if (seenQuestionIds.has(answer.questionId)) {
+                throw new Error("DUPLICATE_QUESTION");
+            }
+            seenQuestionIds.add(answer.questionId);
+
+            const question = questionById.get(answer.questionId);
+            if (!question) {
+                throw new Error("INVALID_QUESTION");
+            }
 
             const selectedChoice = question.choices.find(
+                (choice: any) => choice.id === answer.choiceId
+            );
+            if (!selectedChoice) {
+                throw new Error("INVALID_CHOICE");
+            }
+        }
+
+        let score = 0;
+        const correction = questions.map((question) => {
+            const answer = normalizedAnswers.find((a) => a.questionId === question.id);
+            const selectedChoice = question.choices.find(
                 (choice: any) => choice.id === answer?.choiceId
-                );
-                
-            if (answer && !selectedChoice) { throw new Error("INVALID_CHOICE");}
-
-            const correctChoice = question.choices.find(
-                    (choice: any) => choice.isCorrect
-                );
-
+            );
+            const correctChoice = question.choices.find((choice: any) => choice.isCorrect);
             const isCorrect = selectedChoice?.isCorrect === true;
-
-            const points = isCorrect ? Number(question.points): 0;
+            const points = isCorrect ? Number(question.points) : 0;
             score += points;
 
             return {
                 questionId: question.id,
                 statement: question.statement,
-                selectedChoice: selectedChoice ? {id: selectedChoice.id,content: selectedChoice.content}: null,
+                selectedChoice: selectedChoice
+                    ? { id: selectedChoice.id, content: selectedChoice.content }
+                    : null,
                 correctChoice: {
                     id: correctChoice.id,
                     content: correctChoice.content
@@ -54,12 +79,14 @@ export class ResultService {
             };
         });
 
+        const totalPoints = questions.reduce(
+            (total, question) => total + Number(question.points),
+            0
+        );
+
         const attempt = await this.attemptRepository.create(studentId, examId, score);
         for (const question of questions) {
-            const answer = answers.find(
-                    a => a.questionId === question.id
-                );
-
+            const answer = normalizedAnswers.find((a) => a.questionId === question.id);
             await this.attemptRepository.createAnswer(
                 attempt.id,
                 question.id,
@@ -67,8 +94,9 @@ export class ResultService {
             );
         }
 
-        return { attemptId: attempt.id, score, correction };
+        return {score, total_points: totalPoints, correction};
     }
+
     async getExamResults(examId: number) {
         const exam = await this.examRepository.findById(examId);
         if (!exam) { throw new Error("EXAM_NOT_FOUND");}
@@ -81,6 +109,4 @@ export class ResultService {
         const average = await this.attemptRepository.getAverage(studentId);
         return { results, average };
     }
-
-    
 }
